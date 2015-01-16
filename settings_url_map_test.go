@@ -50,3 +50,29 @@ func TestUrlRewriteMap_2(t *testing.T) {
 		t.Error("Request url should not have been rewritten, was")
 	}
 }
+
+func TestUrlRewriteMap_3(t *testing.T) {
+	var rawQuery string
+
+	rewrites := UrlRewriteMap{}
+
+	err := rewrites.Set("a=1:a=2")
+	if err != nil {
+		t.Error("Should not error on a=1:a=2")
+	}
+
+	rawQuery = "a=1&b=2"
+	if rewrites.Rewrite(rawQuery) == rawQuery {
+		t.Error("Request url should have been rewritten, wasn't")
+	}
+
+	rawQuery = "a=1&b=2"
+	if rewrites.Rewrite(rawQuery) != "a=2&b=2" {
+		t.Error("Request url should have been rewritten, wasn't")
+	}
+
+	rawQuery = "a=2&b=2"
+	if rewrites.Rewrite(rawQuery) != rawQuery {
+		t.Error("Request url should not have been rewritten, was")
+	}
+}

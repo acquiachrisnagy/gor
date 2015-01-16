@@ -4,13 +4,13 @@ import (
 	"bufio"
 	"bytes"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
 	"strings"
 	"sync/atomic"
 	"time"
-	"io/ioutil"
 )
 
 type RedirectNotAllowed struct{}
@@ -54,10 +54,11 @@ type HTTPOutput struct {
 	activeWorkers int64
 	needWorker    chan int
 
-	urlRegexp            HTTPUrlRegexp
-	headerFilters        HTTPHeaderFilters
-	headerHashFilters    HTTPHeaderHashFilters
-	outputHTTPUrlRewrite UrlRewriteMap
+	urlRegexp                 HTTPUrlRegexp
+	headerFilters             HTTPHeaderFilters
+	headerHashFilters         HTTPHeaderHashFilters
+	outputHTTPUrlRewrite      UrlRewriteMap
+	outputHTTPUrlParamRewrite UrlRewriteMap
 
 	headers HTTPHeaders
 	methods HTTPMethods
@@ -67,7 +68,7 @@ type HTTPOutput struct {
 	queueStats *GorStat
 }
 
-func NewHTTPOutput(address string, headers HTTPHeaders, methods HTTPMethods, urlRegexp HTTPUrlRegexp, headerFilters HTTPHeaderFilters, headerHashFilters HTTPHeaderHashFilters, elasticSearchAddr string, outputHTTPUrlRewrite UrlRewriteMap) io.Writer {
+func NewHTTPOutput(address string, headers HTTPHeaders, methods HTTPMethods, urlRegexp HTTPUrlRegexp, headerFilters HTTPHeaderFilters, headerHashFilters HTTPHeaderHashFilters, elasticSearchAddr string, outputHTTPUrlRewrite UrlRewriteMap, outputHTTPUrlParamRewrite UrlRewriteMap) io.Writer {
 
 	o := new(HTTPOutput)
 
@@ -83,6 +84,7 @@ func NewHTTPOutput(address string, headers HTTPHeaders, methods HTTPMethods, url
 	o.headerFilters = headerFilters
 	o.headerHashFilters = headerHashFilters
 	o.outputHTTPUrlRewrite = outputHTTPUrlRewrite
+	o.outputHTTPUrlParamRewrite = outputHTTPUrlParamRewrite
 
 	o.queue = make(chan []byte, 100)
 	if Settings.outputHTTPStats {
@@ -196,6 +198,8 @@ func (o *HTTPOutput) sendRequest(client *http.Client, data []byte) {
 
 	// Rewrite the path as necessary
 	request.URL.Path = o.outputHTTPUrlRewrite.Rewrite(request.URL.Path)
+
+	request.URL.RawQuery = o.outputHTTPUrlParamRewrite.Rewrite(request.URL.RawQuery)
 
 	// Change HOST of original request
 	URL := o.address + request.URL.Path + "?" + request.URL.RawQuery

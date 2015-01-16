@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	VERSION = "0.9.2"
+	VERSION = "0.9.2ext"
 )
 
 type AppSettings struct {
@@ -35,6 +35,7 @@ type AppSettings struct {
 	outputHTTPMethods           HTTPMethods
 	outputHTTPUrlRegexp         HTTPUrlRegexp
 	outputHTTPUrlRewrite        UrlRewriteMap
+	outputHTTPUrlParamRewrite   UrlRewriteMap
 	outputHTTPHeaderFilters     HTTPHeaderFilters
 	outputHTTPHeaderHashFilters HTTPHeaderHashFilters
 	outputHTTPElasticSearch     string
@@ -83,6 +84,7 @@ func init() {
 
 	flag.StringVar(&Settings.outputHTTPElasticSearch, "output-http-elasticsearch", "", "Send request and response stats to ElasticSearch:\n\tgor --input-raw :8080 --output-http staging.com --output-http-elasticsearch 'es_host:api_port/index_name'")
 	flag.Var(&Settings.outputHTTPUrlRewrite, "output-http-rewrite-url", "Rewrite the requst url based on a mapping:\n\tgor --input-raw :8080 --output-http staging.com --output-http-rewrite-url /xml_test/interface.php:/api/service.do")
+	flag.Var(&Settings.outputHTTPUrlParamRewrite, "output-http-rewrite-url-param", "Rewrite the request url query string based on a mapping:\n\tgor --input-raw :8080 --output-http staging.com --output-http-rewrite-url-param a=1:a=2")
 }
 
 func Debug(args ...interface{}) {
